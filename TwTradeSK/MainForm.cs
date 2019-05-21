@@ -32,7 +32,7 @@ namespace TwTradeSK
         private void BtnLogin_Click(object sender, EventArgs e)
         {
             _quoteMgr = new QuoteTickManager();
-            _lib.Initialize("L122852080", TxtPassCode.Text.Trim());
+            _lib.Initialize("", TxtPassCode.Text.Trim());
             _lib.OnTwTick += OnSkTwTick;
         }
         private void OnSkTwTick(TickInfo tick)
@@ -43,6 +43,11 @@ namespace TwTradeSK
         private void BtnQuoteTick_Click(object sender, EventArgs e)
         {
             _lib.SubscribeTWTick("TX00");
+        }
+
+        private void BtnTest_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(this._quoteMgr.KLineSeries.Count().ToString());
         }
     }
 }

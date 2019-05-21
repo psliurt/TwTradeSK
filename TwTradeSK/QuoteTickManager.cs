@@ -38,7 +38,7 @@ namespace TwTradeSK
                     tmpTime.AddMinutes(1);
                 }
 
-                KLineInfo lastK = new KLineInfo(null, null, skTick.TickTime);
+                KLineInfo lastK = new KLineInfo(skTick.TickTime);
                 lastK.AddTick(new Tick
                 {
                     Close = skTick.Close,
@@ -49,7 +49,31 @@ namespace TwTradeSK
                 this.KLineSeries.Add(lastK);
                 this._lastKLine = lastK;
             }
+            else
+            {
+                if (skTick.TickTime > this._lastKLine.EndTime)
+                {
+                    KLineInfo lastK = new KLineInfo(this._lastKLine.SkKLine, this._lastKLine, skTick.TickTime);
+                    lastK.AddTick(new Tick
+                    {
+                        Close = skTick.Close,
+                        Qty = skTick.Qty,
+                        TickTime = skTick.TickTime
+                    });
 
+                    this.KLineSeries.Add(lastK);
+                    this._lastKLine = lastK;
+                }
+                else
+                {
+                    this._lastKLine.AddTick(new Tick
+                    {
+                        Close = skTick.Close,
+                        Qty = skTick.Qty,
+                        TickTime = skTick.TickTime
+                    });
+                }
+            }
 
         }
     }
@@ -88,15 +112,16 @@ namespace TwTradeSK
         {
             if (TickCount == 0) //因為有可能一分內都沒有tick，所以建構這一分鐘K線的時候，先以上一分的Close作為基礎的開高低收四個價位
             {
-                Open = prevTwK.Close;
-                Close = prevTwK.Close;
-                High = prevTwK.Close;
-                Low = prevTwK.Close;
+                Open = prevK.Close;
+                Close = prevK.Close;
+                High = prevK.Close;
+                Low = prevK.Close;
             }
             this.StartTime = start;
             this.EndTime = start.AddMinutes(1).AddTicks(-1);
             this.PrevSkKLine = prevTwK;
             this.PrevKLine = prevK;
+            TickCount += 1;
         }
 
 

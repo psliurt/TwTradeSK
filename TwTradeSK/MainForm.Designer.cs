@@ -31,6 +31,7 @@
             this.TxtPassCode = new System.Windows.Forms.TextBox();
             this.BtnLogin = new System.Windows.Forms.Button();
             this.BtnQuoteTick = new System.Windows.Forms.Button();
+            this.BtnTest = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // TxtPassCode
@@ -61,11 +62,22 @@
             this.BtnQuoteTick.UseVisualStyleBackColor = true;
             this.BtnQuoteTick.Click += new System.EventHandler(this.BtnQuoteTick_Click);
             // 
+            // BtnTest
+            // 
+            this.BtnTest.Location = new System.Drawing.Point(309, 10);
+            this.BtnTest.Name = "BtnTest";
+            this.BtnTest.Size = new System.Drawing.Size(75, 23);
+            this.BtnTest.TabIndex = 3;
+            this.BtnTest.Text = "Test";
+            this.BtnTest.UseVisualStyleBackColor = true;
+            this.BtnTest.Click += new System.EventHandler(this.BtnTest_Click);
+            // 
             // MainTradeForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.BtnTest);
             this.Controls.Add(this.BtnQuoteTick);
             this.Controls.Add(this.BtnLogin);
             this.Controls.Add(this.TxtPassCode);
@@ -82,6 +94,7 @@
         private System.Windows.Forms.TextBox TxtPassCode;
         private System.Windows.Forms.Button BtnLogin;
         private System.Windows.Forms.Button BtnQuoteTick;
+        private System.Windows.Forms.Button BtnTest;
     }
 }
 
