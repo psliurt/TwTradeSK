@@ -9,51 +9,75 @@ namespace TwTradeSK
 {
     public class QuoteTickManager
     {
-        public List<KLineInfo> KLineSeries { get; set; }        
+        /// <summary>
+        /// 今天的1分K陣列
+        /// </summary>
+        public List<KLineInfo> KLineSeries { get; set; }  
+        /// <summary>
+        /// 最近的一分K
+        /// </summary>
         private KLineInfo _lastKLine { get; set; }
-
+        /// <summary>
+        /// 今天到目前為止的K線數目
+        /// </summary>
         public int KLineCount { get; set; }
+
+        public int TwKLineCount { get; set; }
+
+        private DateTime _marketOpenTime { get; set; }
+        
 
         public QuoteTickManager()
         {
             this.KLineSeries = new List<KLineInfo>();
+            this.KLineCount = 0;
+            this.TwKLineCount = 0;
+            this._marketOpenTime = DateTime.Today.AddHours(8).AddMinutes(45);
         }
 
         public void AddSkKLine(TwKLineData skKLine)
         {
-
+            DateTime dt = skKLine.KDate;
+            dt = dt.AddHours(skKLine.KTime.Value.Hour).AddMinutes(skKLine.KTime.Value.Minute);//.AddSeconds(skKLine.KTime.Value.Second);
+            KLineInfo kline = this.KLineSeries.Where(x => x.StartTime == dt).FirstOrDefault();
+            if (kline != null)
+            {
+                kline.AddTwKLine(skKLine);
+                this.TwKLineCount += 1;
+            }
+            else
+            {
+                //TODO:如果沒找到，需要做什麼處理嗎?
+            }
         }
 
         public void AddTwTick(TickInfo skTick)
         {
-            if (this._lastKLine == null)
+            if (this._lastKLine == null) //系統內還沒有任何K線的情況，這種情況有兩種，第一種，系統開盤後才打開，第二種，系統開盤前打開
             {
-                DateTime marketStartTime = DateTime.Today.AddHours(8).AddMinutes(45);
-                DateTime tmpTime = marketStartTime;
-                while (skTick.TickTime > tmpTime)
+                //開市時間為0845
+                DateTime tmpTime = this._marketOpenTime;
+                while (skTick.TickTime >= tmpTime)
                 {
                     KLineInfo kline = new KLineInfo(tmpTime);
-                    KLineSeries.Add(kline);
+                    this.KLineSeries.Add(kline);                    
                     this._lastKLine = kline;
                     tmpTime.AddMinutes(1);
+                    this.KLineCount += 1;
                 }
 
-                KLineInfo lastK = new KLineInfo(skTick.TickTime);
-                lastK.AddTick(new Tick
+                this._lastKLine.AddTick(new Tick
                 {
                     Close = skTick.Close,
                     Qty = skTick.Qty,
                     TickTime = skTick.TickTime
-                });
-
-                this.KLineSeries.Add(lastK);
-                this._lastKLine = lastK;
+                });                
             }
             else
             {
                 if (skTick.TickTime > this._lastKLine.EndTime)
                 {
-                    KLineInfo lastK = new KLineInfo(this._lastKLine.SkKLine, this._lastKLine, skTick.TickTime);
+                    KLineInfo lastK = new KLineInfo(this._lastKLine, skTick.TickTime);
                     lastK.AddTick(new Tick
                     {
                         Close = skTick.Close,
@@ -63,8 +87,9 @@ namespace TwTradeSK
 
                     this.KLineSeries.Add(lastK);
                     this._lastKLine = lastK;
+                    this.KLineCount += 1;
                 }
-                else
+                else if (skTick.TickTime >= this._lastKLine.StartTime && skTick.TickTime <= this._lastKLine.EndTime)
                 {
                     this._lastKLine.AddTick(new Tick
                     {
@@ -73,20 +98,38 @@ namespace TwTradeSK
                         TickTime = skTick.TickTime
                     });
                 }
+                else //這個tick屬於過去的K線
+                {
+                    var historyKLine = this.KLineSeries.Where(x => skTick.TickTime >= x.StartTime && skTick.TickTime <= x.EndTime).FirstOrDefault();
+                    if (historyKLine != null)
+                    {
+                        historyKLine.AddTick(new Tick
+                        {
+                            Close = skTick.Close,
+                            Qty = skTick.Qty,
+                            TickTime = skTick.TickTime
+                        });
+                    }
+                }
             }
-
         }
     }
 
+    /// <summary>
+    /// K線資料
+    /// </summary>
     public class KLineInfo
     {
+        /// <summary>
+        /// K線編號
+        /// </summary>
         public int LineNo { get; set; }
         public int TickCount { get; set; }
         public KLineInfo PrevKLine { get; set; }
         public KLineInfo NextKLine { get; set; }
         public TwKLineData SkKLine { get; set; }
-        public TwKLineData PrevSkKLine { get; set; }
-        public TwKLineData NextSkKLine { get; set; }
+        //public TwKLineData PrevSkKLine { get; set; }
+        //public TwKLineData NextSkKLine { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public List<Tick> TickList { get; set; }
@@ -106,9 +149,10 @@ namespace TwTradeSK
         {
             this.StartTime = start;
             this.EndTime = start.AddMinutes(1).AddTicks(-1);
+            this.TickCount = 0;
         }
 
-        public KLineInfo(TwKLineData prevTwK, KLineInfo prevK, DateTime start)
+        public KLineInfo(KLineInfo prevK, DateTime start)
         {
             if (TickCount == 0) //因為有可能一分內都沒有tick，所以建構這一分鐘K線的時候，先以上一分的Close作為基礎的開高低收四個價位
             {
@@ -117,11 +161,11 @@ namespace TwTradeSK
                 High = prevK.Close;
                 Low = prevK.Close;
             }
-            this.StartTime = start;
+            this.StartTime = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
             this.EndTime = start.AddMinutes(1).AddTicks(-1);
-            this.PrevSkKLine = prevTwK;
+            //this.PrevSkKLine = prevTwK;
             this.PrevKLine = prevK;
-            TickCount += 1;
+            TickCount = 0;
         }
 
 
@@ -140,8 +184,21 @@ namespace TwTradeSK
             }
             else
             {
+                if (tick.Close > this.High)
+                {
+                    this.High = tick.Close;
+                }
+
+                if (tick.Close < this.Low)
+                {
+                    this.Low = tick.Close;
+                }
+                this.Close = tick.Close;
                 Quantity += tick.Qty;
             }
+
+            this.TickList.Add(tick);
+            this.TickCount += 1;
         }
 
         public void AddTwKLine(TwKLineData skTwKLine)

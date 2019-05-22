@@ -18,10 +18,12 @@ namespace TwTradeSK
         private ILog _log = LogManager.GetLogger(typeof(MainTradeForm));
         private QuoteTickManager _quoteMgr { get; set; }
 
-        SkFacade _lib = SkFacade.Instance(SkLibType.Quote);
+        private SkFacade _lib { get; set; }
+
         public MainTradeForm()
         {
             InitializeComponent();
+            this._lib = SkFacade.Instance(SkLibType.Quote);
         }
 
         private void MainTradeForm_Load(object sender, EventArgs e)
