@@ -32,7 +32,7 @@ namespace TwTradeSK
             this.KLineSeries = new List<KLineInfo>();
             this.KLineCount = 0;
             this.TwKLineCount = 0;
-            this._marketOpenTime = DateTime.Today.AddHours(8).AddMinutes(45);
+            this._marketOpenTime = DateTime.Today.AddDays(-1).AddHours(14).AddMinutes(15);
         }
 
         public void AddSkKLine(TwKLineData skKLine)
@@ -62,7 +62,7 @@ namespace TwTradeSK
                     KLineInfo kline = new KLineInfo(tmpTime);
                     this.KLineSeries.Add(kline);                    
                     this._lastKLine = kline;
-                    tmpTime.AddMinutes(1);
+                    tmpTime = tmpTime.AddMinutes(1);
                     this.KLineCount += 1;
                 }
 
@@ -77,7 +77,7 @@ namespace TwTradeSK
             {
                 if (skTick.TickTime > this._lastKLine.EndTime)
                 {
-                    KLineInfo lastK = new KLineInfo(this._lastKLine, skTick.TickTime);
+                    KLineInfo lastK = new KLineInfo( skTick.TickTime);
                     lastK.AddTick(new Tick
                     {
                         Close = skTick.Close,
@@ -147,20 +147,21 @@ namespace TwTradeSK
 
         public KLineInfo(DateTime start)
         {
-            this.StartTime = start;
+            this.StartTime = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
             this.EndTime = start.AddMinutes(1).AddTicks(-1);
             this.TickCount = 0;
+            this.TickList = new List<Tick>();
         }
 
-        public KLineInfo(KLineInfo prevK, DateTime start)
+        public KLineInfo( KLineInfo prevK, DateTime start)
         {
-            if (TickCount == 0) //因為有可能一分內都沒有tick，所以建構這一分鐘K線的時候，先以上一分的Close作為基礎的開高低收四個價位
-            {
-                Open = prevK.Close;
-                Close = prevK.Close;
-                High = prevK.Close;
-                Low = prevK.Close;
-            }
+            //if (TickCount == 0) //因為有可能一分內都沒有tick，所以建構這一分鐘K線的時候，先以上一分的Close作為基礎的開高低收四個價位
+            //{
+            //    Open = prevK.Close;
+            //    Close = prevK.Close;
+            //    High = prevK.Close;
+            //    Low = prevK.Close;
+            //}
             this.StartTime = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
             this.EndTime = start.AddMinutes(1).AddTicks(-1);
             //this.PrevSkKLine = prevTwK;
